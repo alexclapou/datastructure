@@ -1,0 +1,91 @@
+#include "SMMIterator.h"
+#include "SortedMultiMap.h"
+#include <iostream>
+#include <vector>
+#include <exception>
+using namespace std;
+
+SortedMultiMap::SortedMultiMap(Relation r) {
+    //basic for slla
+    capacity = 5;
+    elements = new TElem[capacity];
+    next = new int[capacity];
+    values = new SLLAvalues[capacity];
+    head = -1;
+
+    for(int i = 0; i < capacity; i++){
+        next[i] = i+1;
+
+        //initialize values slla for every first [capacity] keys
+        init_SSLAvalues(values[i]);
+    }
+
+    next[capacity-1] = -1;
+    first_empty = 0;
+    length = 0;
+}
+void SortedMultiMap::add(TKey c, TValue v) {
+    //first case - list is empty
+    if(isEmpty()){
+        elements[0].first = c;
+        values[0].value[first_empty] = v;
+        values[0].first_empty = values[0].next[values[0].first_empty];
+    }
+    else{
+        for(int i = 0; i < length; i++)
+            //look for the key
+            if(elements[i].first == c){
+                if(values[i].capacity == values[i].length){
+                    values[i].capacity *= 2;
+                    TValue *new_value = new TValue[values[i].capacity];
+                    TValue *new_next = new int[values[i].capacity];
+                    for(int J = 0; J < values[i].length; J++)
+                        new_value[J] = values[i].value[J];
+                    for(int J = 0; J < values[i].capacity; J++)
+                        new_next[J] = J+1;
+                    delete []values[i].value;
+                    delete []values[i].next;
+                    values[i].value = new_value;
+                    values[i].next = new_next;
+                }
+                values[i].value[values[i].first_empty] = v;
+                values[i].first_empty = values[i].next[values[i].first_empty];
+            }
+    }
+    length++;
+}
+
+vector<TValue> SortedMultiMap::search(TKey c) const {
+	//TODO - Implementation
+	return vector<TValue>();
+}
+
+bool SortedMultiMap::remove(TKey c, TValue v) {
+	//TODO - Implementation
+    return false;
+}
+
+
+int SortedMultiMap::size() const {
+    return length;
+}
+
+bool SortedMultiMap::isEmpty() const {
+    return length == 0;
+}
+
+SMMIterator SortedMultiMap::iterator() const {
+	return SMMIterator(*this);
+}
+
+SortedMultiMap::~SortedMultiMap() {
+    for(int i = 0; i < capacity; i++){
+        if(values[i].next != nullptr)
+            delete []values[i].next;
+        if(values[i].value != nullptr)
+            delete []values[i].value;
+    }
+    delete []values;
+    delete []elements;
+    delete []next;
+}

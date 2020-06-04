@@ -1,0 +1,94 @@
+#include "SMMIterator.h"
+#include "SortedMultiMap.h"
+#include <iostream>
+#include <vector>
+#include <exception>
+using namespace std;
+
+BSTNode *SortedMultiMap::create_node(TKey c, TValue v){
+    BSTNode *new_node = new BSTNode;
+    new_node->data = make_pair(c, v);
+    return new_node;
+}
+void SortedMultiMap::insert_rec(BSTNode *node, TKey c, TValue v){
+    if(r(node->data.first, c)){
+        if(node->left == nullptr){
+            node->left = create_node(c, v);
+            return;
+        }
+        insert_rec(node->left, c, v);
+    }
+    else{
+        if(node->right == nullptr){
+            node->right = create_node(c, v);
+            return;
+        }
+        insert_rec(node->right, c, v);
+    }
+}
+
+SortedMultiMap::SortedMultiMap(Relation r) {
+    this->r = r;
+    length = 0;
+    bst = nullptr;
+}
+
+void SortedMultiMap::add(TKey c, TValue v) {
+    length++;
+    if(bst == nullptr){ // we don t have a root
+        bst = create_node(c, v);
+    }
+    else{ // we have a root
+        insert_rec(bst, c, v);
+    }
+}
+
+vector<TValue> SortedMultiMap::search(TKey c) const {
+    if(bst == nullptr)
+        return vector<TValue>();
+    vector<TValue> values;
+    BSTNode *current_node = bst;
+    bool found, done;
+
+    found = false; // it s sorted so we have multiple pairs in a row which has the same key
+    done = false;
+    while(current_node != nullptr && !done){
+        /*
+        if(current_node->data.first == c){
+            found = true;
+            values.push_back(current_node->data.second);
+        }
+        else if(found == true)
+            done = true;
+            */
+        std::cout<<current_node->data.first<<" "<<current_node->data.second<<'\n';
+        if(r(current_node->data.first, c))
+            current_node = current_node->left;
+        else
+            current_node = current_node->right;
+    }
+	return values; 
+}
+
+bool SortedMultiMap::remove(TKey c, TValue v) {
+	//TODO - Implementation
+    return false;
+}
+
+
+int SortedMultiMap::size() const {
+    return length;
+	return 0;
+}
+
+bool SortedMultiMap::isEmpty() const {
+    return length == 0;
+}
+
+SMMIterator SortedMultiMap::iterator() const {
+	return SMMIterator(*this);
+}
+
+SortedMultiMap::~SortedMultiMap() {
+	//TODO - Implementation
+}

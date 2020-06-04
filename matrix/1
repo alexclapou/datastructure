@@ -1,0 +1,157 @@
+#include "Matrix.h"
+#include <iostream>
+#include <exception>
+#include <stdexcept>
+using namespace std;
+
+
+Matrix::Matrix(int nrLines, int nrCols) {
+	   
+	m_nr_lines = nrLines;
+	m_nr_columns = nrCols;
+	m_capacity = nrCols;
+	m_elements = new Node*[m_capacity];
+	for (int i = 0; i < m_capacity; ++i)
+	{
+		Node* node = new Node;
+		m_elements[i] = node;
+	}
+}
+
+
+int Matrix::nrLines() const {
+	return m_nr_lines;
+}
+
+
+int Matrix::nrColumns() const {
+	return m_nr_columns;
+}
+
+TElem Matrix::element(int i, int j) const {
+	if (i >= m_nr_lines || j >= m_nr_columns || i < 0 || j < 0)
+		throw std::out_of_range("Out of range");
+	for (int prost_i = 0; prost_i < m_capacity; ++prost_i)
+	{
+		while(m_elements[prost_i]->next != nullptr)
+		{
+			if (m_elements[prost_i]->column == j && m_elements[prost_i]->line == i)
+				return m_elements[prost_i]->data;
+			m_elements[prost_i] = m_elements[prost_i]->next;
+		}
+		if (m_elements[prost_i]->column == j && m_elements[prost_i]->line == i)
+			return m_elements[prost_i]->data;
+	}
+	return NULL_TELEM;
+}
+
+TElem Matrix::modify(int i, int j, TElem e) {
+	int hash_pos = hash(e);
+	int flag = 0;
+	int head = 0;
+	
+	while (m_elements[hash_pos]->next != nullptr && flag == 0)
+	{
+		//case 3 and 4
+		if (m_elements[hash_pos]->column == j && m_elements[hash_pos]->line == i)
+		{
+			//if current != 0 and e == 0
+			//erase
+			if(e == NULL_TELEM)
+			{
+				//erase if head
+				if (head == 0)
+				{
+						
+				}//erase if not head
+				else
+				{
+					
+				}
+			}
+			//if current !=0 and e != 0
+			else
+			{
+				//erase if head
+				if (head == 0)
+				{
+
+				}//erase if not head
+				else
+				{
+
+				}
+			}
+			flag = 1;
+		}
+		m_elements[hash_pos] = m_elements[hash_pos]->next;
+		head = 1;
+	}
+	//case 2
+	if (flag == 0 && e != NULL_TELEM)
+	{
+		//if head
+        //TESTED AND WORK
+		if(m_elements[hash_pos]->next == nullptr && m_elements[hash_pos]->data == NULL_TELEM)
+		{
+			//WORKS ! - DO NOT TOUCH
+			m_elements[hash_pos]->data = e;
+			m_elements[hash_pos]->column = j;
+			m_elements[hash_pos]->line = i;
+		}
+		//if not head
+		else
+		{
+			//if 5 < 7 NOT TESTED YET
+            /*
+            if (e <= m_elements[hash_pos]->data)
+            {
+                //create node and init with new values
+                Node* new_node = new Node;
+                new_node->column = j;
+                new_node->line = i;
+                new_node->data = e;
+                //go to last node
+                std::cout<<m_elements[hash_pos]->data<<'\n';
+                while(m_elements[hash_pos]->next != nullptr){
+                    m_elements[hash_pos] = m_elements[hash_pos]->next;
+                }
+                //add a new empty node to the final
+                m_elements[hash_pos]->next = new_node;
+                //m_elements[hash_pos] = m_elements[hash_pos]->next;
+                //go to previous
+                while (m_elements[hash_pos]->previous != nullptr )
+                {
+                    m_elements[hash_pos]->line = m_elements[hash_pos]->previous->line;
+                    m_elements[hash_pos]->column = m_elements[hash_pos]->previous->column;
+                    m_elements[hash_pos]->data = m_elements[hash_pos]->previous->data;
+                    m_elements[hash_pos] = m_elements[hash_pos]->previous;
+                }
+                m_elements[hash_pos]->column = j;
+                m_elements[hash_pos]->line = i;
+                m_elements[hash_pos]->data = e;
+            }
+			//if 7 > 5
+			else
+			{
+				
+			}
+                */
+            Node *new_node = new Node;
+            new_node->column = j;
+            new_node->line = i;
+            new_node->data = e;
+            while(m_elements[hash_pos]->next != nullptr)
+                m_elements[hash_pos] = m_elements[hash_pos]->next;
+
+		}
+	}
+	//case 1
+	return NULL_TELEM;
+}
+
+int Matrix::hash(TElem e)
+{
+	return abs(e) % m_capacity;
+}
+

@@ -1,0 +1,279 @@
+#include "Matrix.h"
+#include <iostream>
+#include <exception>
+#include <stdexcept>
+using namespace std;
+
+
+Matrix::Matrix(int nrLines, int nrCols) {
+	nr_lines = nrLines;
+	nr_columns = nrCols;
+	capacity = 6;
+    total = 0;
+    i_random = rand() % capacity;
+    j_random = rand() % capacity;
+	elements = new Node*[capacity];
+	for (int i = 0; i < capacity; i++)
+	{
+		Node* node = new Node;
+		elements[i] = node;
+	}
+}
+
+int Matrix::hash(int i, int j)const
+{
+    int result_hash = i*i_random + j*j_random;
+    result_hash = result_hash % capacity;
+    return result_hash;
+}
+
+void Matrix::resize(){
+    Node **new_elements = new Node*[capacity];
+    Node *all_elements = new Node[total];
+    change_randoms(i_random, j_random);
+    int all_index = 0;
+    for(int i = 0; i < capacity*2; i++){
+        Node *node = new Node;
+        new_elements[i] = node;
+    }
+    for(int i = 0; i < capacity; i++){
+        Node *current_node = elements[i];
+        while(current_node != nullptr){
+            all_elements[all_index] = *current_node;
+            all_index++;
+            current_node = current_node->next;
+        }
+    }
+    for(int i = 0; i < capacity; i++){
+        Node *next_node;
+        while(elements[i] != nullptr){
+            next_node = elements[i]->next;
+            delete elements[i];
+            elements[i] = next_node;
+        }
+    }
+    capacity *= 2;
+    elements = new_elements;
+    return;
+    for(int i = 0; i < total; i++){
+        int new_hash_pos = hash(all_elements[i].line, all_elements[i].column);
+		if(new_elements[new_hash_pos]->next == nullptr && new_elements[new_hash_pos]->column == -1)
+		{
+			//WORKS ! - DO NOT TOUCH
+			new_elements[new_hash_pos]->data = all_elements[i].data;
+			new_elements[new_hash_pos]->column = all_elements[i].column;
+			new_elements[new_hash_pos]->line = all_elements[i].line;
+            continue;
+		}
+		//if not head
+		else
+		{
+            //TESTED AND WORK
+            Node *c_node = new_elements[new_hash_pos];
+            Node *new_node = new Node;
+
+            new_node->column = all_elements[i].column;
+            new_node->line = all_elements[i].line;
+            new_node->data = all_elements[i].data;
+            //check if the head is not in relation with the element we want to add
+            if(!orderedL(c_node, new_node)){
+                new_node->next = c_node;
+                new_elements[new_hash_pos] = new_node;
+                continue;
+            }
+            while(c_node->next != nullptr){
+                Node *next_node = c_node->next;
+                //going through all the list to see if there is a new index to place the new element or add to end
+                if(!orderedL(next_node, new_node)){
+                    new_node->next = next_node;
+                    c_node->next = new_node;
+                    break;
+                }
+                c_node = c_node->next;
+            }
+            //we didn't find any problem so we add the element at the end
+            c_node->next = new_node;
+		}
+	}
+    //show();
+}
+
+void Matrix::change_randoms(int &random1, int &random2){
+    random1 = rand() % capacity;
+    random2 = rand() % capacity;
+}
+
+
+int Matrix::nrLines() const {
+	return nr_lines;
+}
+
+
+int Matrix::nrColumns() const {
+	return nr_columns;
+}
+
+TElem Matrix::element(int i, int j) const {
+	if (i >= nr_lines || j >= nr_columns || i < 0 || j < 0)
+		throw std::out_of_range("Out of range");
+    int hash_pos = hash(i, j);
+
+    Node *current_node = elements[hash_pos];
+    while(current_node != nullptr){
+        if(current_node->column == j && current_node->line == i)
+            return current_node->data;
+        current_node = current_node->next;
+    }
+	return NULL_TELEM;
+}
+
+TElem Matrix::modify(int i, int j, TElem e) {
+    if(i < 0 || j < 0 || i >= nrLines() || j >= nrColumns())
+        throw std::out_of_range("out of range");
+	int hash_pos;
+	int head = 0;
+    int prev_value;
+    Node *prev_node;
+
+    hash_pos = hash(i, j);
+    Node *c_node = elements[hash_pos];
+    //case 3 and 4
+	while (c_node != nullptr)
+	{
+		if (c_node->column == j && c_node->line == i)
+		{
+			//if current != 0 and e == 0
+			//case delete
+			if(e == NULL_TELEM && c_node->data != NULL_TELEM)
+			{
+                total--;
+                Node *temp_node;
+
+                prev_value = c_node->data;
+                temp_node = c_node->next;
+                if(c_node == elements[hash_pos]){//head
+                    delete elements[hash_pos];
+                    if(temp_node == nullptr)
+                        elements[hash_pos] = new Node;// always keep the head of the list
+                    else
+                        elements[hash_pos] = temp_node;
+                    return prev_value;
+                }
+                else{
+                    if(temp_node == nullptr){ // if it s the last element
+                        delete c_node;
+                        c_node = nullptr;
+                        prev_node->next = c_node;
+                        return prev_value;
+                    }//if it s another element
+                    c_node->data = temp_node->data;
+                    c_node->line = temp_node->line;
+                    c_node->column = temp_node->column;
+                    c_node->next = temp_node->next;
+                    delete temp_node;
+                    temp_node = nullptr;
+                    return prev_value;
+                }
+			}
+			//if current !=0 and e != 0
+            //case update
+            if(e != NULL_TELEM && c_node->data != NULL_TELEM)
+			{
+                prev_value = c_node->data;
+                c_node->data = e;
+                return prev_value;
+			}
+		}
+        prev_node = c_node;
+        c_node = c_node->next;
+	}
+	//case 2
+    //DO NOT CHANGE THIS SPER CA E BINE ! case 2 ok cel putin la adaugare fara stergere intre
+	if(e != NULL_TELEM)
+	{
+        total++;
+		//if head
+        //TESTED AND WORK
+		if(elements[hash_pos]->next == nullptr && elements[hash_pos]->column == -1)
+		{
+			//WORKS ! - DO NOT TOUCH
+			elements[hash_pos]->data = e;
+			elements[hash_pos]->column = j;
+			elements[hash_pos]->line = i;
+            return NULL_TELEM;
+		}
+		//if not head
+		else
+		{
+            //TESTED AND WORK
+            Node *current_node = elements[hash_pos];
+            Node *new_node = new Node;
+
+            new_node->column = j;
+            new_node->line = i;
+            new_node->data = e;
+            //check if the head is not in relation with the element we want to add
+            if(!orderedL(current_node, new_node)){
+                new_node->next = current_node;
+                elements[hash_pos] = new_node;
+                return NULL_TELEM;
+            }
+            while(current_node->next != nullptr){
+                Node *next_node = current_node->next;
+                //going through all the list to see if there is a new index to place the new element or add to end
+                if(!orderedL(next_node, new_node)){
+                    new_node->next = next_node;
+                    current_node->next = new_node;
+                    return NULL_TELEM;
+                }
+                current_node = current_node->next;
+            }
+            //we didn't find any problem so we add the element at the end
+            current_node->next = new_node;
+		}
+	}
+	//case 1
+	return NULL_TELEM;
+}
+
+void Matrix::show(){
+    for(int i = 0; i < capacity; i++){
+        Node *current_node = elements[i];
+        while(current_node != nullptr){
+            std::cout<<current_node->line<<" "<<current_node->column<<"---"<<current_node->data<<'\n';
+            current_node = current_node->next;
+        }
+        std::cout<<'\n';
+    }
+}
+
+int Matrix::orderedL(Node *n1, Node *n2){
+    if(n1->line < n2->line)
+        return 1;
+    else{
+        if(n1->line > n2->line)
+            return 0;
+        else
+            if(n1->column < n2->column)
+                return 1;
+            else
+                if(n1->column > n2->column)
+                    return 0;
+                else
+                    return 1;
+    }
+}
+
+Matrix::~Matrix(){
+    /*
+    for(int i = 0; i < capacity; i++){
+        Node *next_node;
+        while(elements[i] != nullptr){
+            next_node = elements[i]->next;
+            delete elements[i];
+            elements[i] = next_node;
+        }
+    }
+    delete []elements;
+    */
+}
